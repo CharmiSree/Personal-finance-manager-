@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Manager</title>
+    <style>
+        /* Inline CSS */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f0f0f0, #e8e8e8);
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column; /* Align items in column */
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            width: 350px;
+            text-align: center;
+            animation: slideIn 0.5s ease-in-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #2980b9;
+        }
+
+        h2 {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #34495e;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+            color: #2980b9;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #2980b9;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            background-color: #2980b9;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        button:hover {
+            background-color: #3498db;
+            transform: translateY(-2px);
+        }
+
+        .message {
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #e74c3c;
+            transition: opacity 0.5s;
+        }
+
+        /* Styles for displaying transactions */
+        .transactions {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 400px; /* Limit width of the transaction list */
+            overflow-y: auto; /* Enable scroll if content is too long */
+            max-height: 200px; /* Set max height for scrolling */
+        }
+
+        .transaction-item {
+            background-color: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            margin: 10px 0;
+            padding: 10px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Personal Finance Manager</h1>
+        <h2>Add Your Transaction</h2>
+        <form id="transaction-form">
+            <div class="form-group">
+                <label for="type">Transaction Type</label>
+                <input type="text" id="type" placeholder="Income or Expense" required>
+            </div>
+            <div class="form-group">
+                <label for="category">Category</label>
+                <input type="text" id="category" placeholder="Category" required>
+            </div>
+            <div class="form-group">
+                <label for="amount">Amount</label>
+                <input type="number" id="amount" placeholder="Amount" required>
+            </div>
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" id="date" required>
+            </div>
+            <button type="submit">Add Transaction</button>
+        </form>
+        <div id="message" class="message"></div> <!-- For messages -->
+
+    
+
+    <script>
+        document.getElementById('transaction-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const transaction = {
+                type: document.getElementById('type').value,
+                category: document.getElementById('category').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                date: document.getElementById('date').value
+            };
+
+            fetch('http://localhost:3000/api/transactions/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(transaction)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('message').innerText = 'Transaction added successfully! 🎉';
+                document.getElementById('transaction-form').reset();
+                loadTransactions(); // Reload transactions after adding
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('message').innerText = 'Error adding transaction. ❌';
+            });
+        });
+
+        // Function to load and display transactions
+        function loadTransactions() {
+    fetch('http://localhost:3000/api/transactions')
+        .then(response => {
+            console.log('Response:', response);
+            return response.json();
+        })
+        .then(transactions => {
+            console.log('Transactions:', transactions); // Log the transactions
+            const container = document.getElementById('transactions-container');
+            container.innerHTML = ''; // Clear the container
+            transactions.forEach(transaction => {
+                const transactionElement = document.createElement('div');
+                transactionElement.className = 'transaction-item';
+                transactionElement.innerHTML = `
+                    <strong>Type:</strong> ${transaction.type}<br>
+                    <strong>Category:</strong> ${transaction.category}<br>
+                    <strong>Amount:</strong> $${transaction.amount.toFixed(2)}<br>
+                    <strong>Date:</strong> ${transaction.date}
+                `;
+                container.appendChild(transactionElement);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching transactions:', error);
+        });
+}
+
+
+        // Load transactions on page load
+        window.onload = loadTransactions;
+    </script>
+</body>
+</html>
